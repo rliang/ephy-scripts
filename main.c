@@ -1,9 +1,10 @@
+#include <jsc/jsc.h>
 #include <webkit2/webkit-web-extension.h>
-#include <JavaScriptCore/JavaScript.h>
 
 struct script_info {
-	JSStringRef source;
-	JSStringRef script;
+	gchar *str;
+	gsize len;
+	gchar *src;
 };
 
 static GArray *script_infos;
@@ -12,17 +13,11 @@ static WebKitScriptWorld *script_world;
 static void add_file(const gchar *dirname, const gchar *filename)
 {
 	gchar *path = g_build_filename(dirname, filename, NULL);
-	gchar *uri = g_filename_to_uri(path, NULL, NULL);
-	GMappedFile *file = g_mapped_file_new(path, FALSE, NULL);
-	if (file != NULL) {
-		struct script_info s = {
-			JSStringCreateWithUTF8CString(uri),
-			JSStringCreateWithUTF8CString(g_mapped_file_get_contents(file)),
-		};
+	struct script_info s;
+	if (g_file_get_contents(path, &s.str, &s.len, NULL)) {
+		s.src = g_filename_to_uri(path, NULL, NULL);
 		g_array_append_val(script_infos, s);
-		g_mapped_file_unref(file);
 	}
-	g_free(uri);
 	g_free(path);
 }
 
@@ -43,12 +38,13 @@ static void on_document_loaded(WebKitWebPage *page, gpointer user_data)
 {
 	(void) user_data;
 	WebKitFrame *frame = webkit_web_page_get_main_frame(page);
-	JSGlobalContextRef ctx = webkit_frame_get_javascript_context_for_script_world(frame, script_world);
-	for (guint i = 0; i < script_infos->len; i++) {
-		struct script_info *s = &g_array_index(script_infos, struct script_info, i);
-		JSEvaluateScript(ctx, s->script, NULL, s->source, 1, NULL);
+	JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, script_world);
+	for (gsize i = 0; i < script_infos->len; i++) {
+		const struct script_info *s = &g_array_index(script_infos, struct script_info, i);
+		g_object_unref(jsc_context_evaluate_with_source_uri(ctx, s->str, s->len, s->src, 0));
 	}
 }
+
 
 static void on_page_created(WebKitWebExtension *extension, WebKitWebPage *page, gpointer user_data)
 {
