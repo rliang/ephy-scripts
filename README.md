@@ -16,9 +16,17 @@ Just place your scripts under either:
 
 # Requirements
 * `pkg-config`
-* `webkit2gtk-web-extension-4.0`
+* `libwebkit2gtk-4.0-dev` or `webkit2gtk-web-extension-4.0`
 
 # Installation
+
+For Debian-based distributions:
+```sh
+make
+sudo make DESTDIR=lib/x86_64-linux-gnu/epiphany-browser install
+```
+
+Otherwise:
 ```sh
 make
 sudo make install
