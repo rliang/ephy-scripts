@@ -8,7 +8,6 @@ struct script_info {
 };
 
 static GArray *script_infos;
-static WebKitScriptWorld *script_world;
 
 static void add_file(const gchar *dirname, const gchar *filename)
 {
@@ -37,8 +36,7 @@ static void add_path(const gchar *path)
 static void on_document_loaded(WebKitWebPage *page, gpointer user_data)
 {
 	(void) user_data;
-	WebKitFrame *frame = webkit_web_page_get_main_frame(page);
-	JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, script_world);
+	JSCContext *ctx = webkit_frame_get_js_context(webkit_web_page_get_main_frame(page));
 	for (gsize i = 0; i < script_infos->len; i++) {
 		const struct script_info *s = &g_array_index(script_infos, struct script_info, i);
 		g_object_unref(jsc_context_evaluate_with_source_uri(ctx, s->str, s->len, s->src, 0));
@@ -56,7 +54,6 @@ static void on_page_created(WebKitWebExtension *extension, WebKitWebPage *page, 
 G_MODULE_EXPORT void webkit_web_extension_initialize(WebKitWebExtension *extension)
 {
 	script_infos = g_array_new(FALSE, FALSE, sizeof(struct script_info));
-	script_world = webkit_script_world_new();
 	const gchar * const *paths = g_get_system_data_dirs();
 	while (*paths != NULL)
 		add_path(*(paths++));
