@@ -10,7 +10,7 @@ $(TARGET): $(wildcard *.c)
 	$(CC) -fPIC $(CFLAGS) -shared $(LDFLAGS) -o $@ $^
 
 install: $(TARGET)
-	install -D $^ $(PREFIX)/$(DESTDIR)/web-extensions/$(TARGET)
+	install -D $^ $(PREFIX)/$(DESTDIR)/web-process-extensions/$(TARGET)
 
 uninstall:
-	rm -f $(PREFIX)/$(DESTDIR)/web-extensions/$(TARGET)
+	rm -f $(PREFIX)/$(DESTDIR)/web-process-extensions/$(TARGET)
